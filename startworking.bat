@@ -81,61 +81,35 @@ goto :askPull
 
 :askVSCode
     set /p "VSCODE=Open VSCode in: "
-    set "VALID="
 
     IF "%VSCODE%"=="." (
-        set "VALID=true"
+        goto :askPull
     )
 
     IF "%VSCODE%"=="n" (
-        set "VALID=true"
+        goto :askPull
+    )
+    
+    IF "%VSCODE%"=="a" (
+        goto :askPull
     )
 
     for /f %%f in ('dir /a:d /b .') do (
         IF "%%f"=="%VSCODE%" (
-            set "VALID=true"
+            goto :askPull
         )
     )
 
-    IF NOT DEFINED VALID (
-        echo '%VSCODE%' folder not found. Please enter a valid folder.
-        goto :askVSCode
-    )
+    echo '%VSCODE%' folder not found. Please enter a valid folder.
+    goto :askVSCode
 
 
 :askPull
     set /p "GITPULL=Git Pull (y/n)? "
     IF NOT "%GITPULL%"=="y" (
         IF NOT "%GITPULL%"=="n" (
-            echo Input rejected. Only 'y' or 'n' is accepted.
+            echo Input rejected. Only 'y' or 'n' are accepted.
             goto :askPull
-        )
-    )
-
-
-:startDiscord
-    start %LocalAppData%\Discord\Update --processStart Discord.exe
-
-:: startGitBash
-    IF "%GITPULL%"=="y" (
-        start "" "%PROGRAMFILES%\Git\bin\sh.exe" --login -i -l -c "sh -c 'git pull; exec sh'"
-    ) ELSE (
-        start "" "%PROGRAMFILES%\Git\bin\sh.exe" --login
-    )
-
-:: openVSCode
-    IF DEFINED VSCODE (
-        IF "%VSCODE%"=="n" (
-            goto :handleApps
-        ) ELSE (
-            start cmd /C "code %MAINFOLDER%\%PROJECT%\%VSCODE%"
-        )
-    ) ELSE (
-        IF NOT "%FIRSTAPP%"=="n" (
-            start cmd /C "code %MAINFOLDER%\%PROJECT%\%FIRSTAPP%"
-        )
-        IF DEFINED SECONDAPP (
-            start cmd /C "code %MAINFOLDER%\%PROJECT%\%SECONDAPP%"
         )
     )
 
@@ -228,6 +202,11 @@ goto :askPull
     IF DEFINED VSCODE (
         IF "%VSCODE%"=="n" (
             goto :startPostman
+        ) 
+        IF "%VSCODE%"=="a" (
+            for /f %%f in ('dir /a:d /b .') do (
+                start cmd /C "code %%f"
+            )
         ) ELSE (
             start cmd /C "code %MAINFOLDER%\%PROJECT%\%VSCODE%"
         )
