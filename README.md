@@ -4,7 +4,7 @@ Batch command to automate workflow.
 
 # Setup
   - Download the file and move it to "C:\Windows\System32"
-  - Change :projectsFolder MAINFOLDER variable to your projects directory
+  - Change :projectsFolder "MAINFOLDER" variable to your projects directory
 
 
 # What it does
@@ -36,7 +36,8 @@ startworking [ project ] [ first-app ] [ second-app ]
 # Notes
   - VSCode will open in apps selected. If there is no app selected, it will ask for a folder in your project. </br>
               - ".": open vscode in project's root folder </br>
-              - "n": don't open vscode
+              - "n": don't open vscode </br>
+              - "a": open vscode in all folders
 
   - Default commands: </br>
               - app: ionic s </br>
