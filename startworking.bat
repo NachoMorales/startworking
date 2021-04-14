@@ -1,14 +1,19 @@
 @echo off
 setlocal enabledelayedexpansion
 
+@REM !IMPORTANT: set this variable to the root folder of your projects
+:projectFolder
+    set MAINFOLDER=C:\Users\%USERNAME%\Desktop\projects
+
 :: checkProject
 IF [%1]==[] (
-    echo "Modo de uso: startworking <NombreProyecto> <NombreApp; default: all; 'n': ninguna> <NombreSegundaApp; opcional>"
+    echo "Usage: startworking <ProjectName> <AppFolder; default: all; 'n': none> <SecondAppFolder; optional>"
     exit /b
 )
 set PROJECT=%1
-cd C:\Users\%USERNAME%\Desktop\projects\%PROJECT%
-IF %ERRORLEVEL% neq 0 echo "No se encontró el proyecto '%PROJECT%'" & exit /b %ERRORLEVEL%
+
+cd %MAINFOLDER%\%PROJECT%
+IF %ERRORLEVEL% neq 0 echo "Project '%PROJECT%' not found." & exit /b %ERRORLEVEL%
 
 
 :: checkFirstApp
@@ -36,9 +41,9 @@ IF "%FIRSTAPP%"=="adm" (
                 )
             )
             IF DEFINED FIRSTAPPISVALID (
-                set /p FIRSTCOMMAND="Ingresar comando para iniciar %FIRSTAPP%: "
+                set /p FIRSTCOMMAND="Enter command to start '%FIRSTAPP%': "
             ) ELSE (
-                echo No se encontro la carpeta '%FIRSTAPP%' en el proyecto %PROJECT%
+                echo '%FIRSTAPP%' folder not found in '%PROJECT%'
                 exit /b
             )
         )
@@ -64,7 +69,7 @@ IF "%SECONDAPP%"=="adm" (
                 )
             )
             IF DEFINED SECONDAPPISVALID (
-                set /p SECONDCOMMAND="Ingresar comando para iniciar %SECONDAPP%: "
+                set /p SECONDCOMMAND="Enter command to start '%SECONDAPP%': "
             ) ELSE (
                 echo No se encontro la carpeta '%SECONDAPP%' en el proyecto %PROJECT%
                 exit /b
@@ -75,7 +80,7 @@ goto :askPull
 
 
 :askVSCode
-    set /p "VSCODE=Abrir vscode en: "
+    set /p "VSCODE=Open VSCode in: "
     set "VALID="
 
     IF "%VSCODE%"=="." (
@@ -93,16 +98,16 @@ goto :askPull
     )
 
     IF NOT DEFINED VALID (
-        echo No se encontro la carpeta '%VSCODE%'. Por favor introduzca una carpeta valida.
+        echo '%VSCODE%' folder not found. Please enter a valid folder.
         goto :askVSCode
     )
 
 
 :askPull
-    set /p "GITPULL=Hacer pull (y/n)? "
+    set /p "GITPULL=Git Pull (y/n)? "
     IF NOT "%GITPULL%"=="y" (
         IF NOT "%GITPULL%"=="n" (
-            echo No se acepta: '%GITPULL%'. Solo se acepta 'y' o 'n'
+            echo Input rejected. Only 'y' or 'n' is accepted.
             goto :askPull
         )
     )
@@ -113,7 +118,6 @@ goto :askPull
 
 :: startGitBash
     IF "%GITPULL%"=="y" (
-        :: IMPORTANTE: hacer git add y git commit antes del pull?
         start "" "%PROGRAMFILES%\Git\bin\sh.exe" --login -i -l -c "sh -c 'git pull; exec sh'"
     ) ELSE (
         start "" "%PROGRAMFILES%\Git\bin\sh.exe" --login
@@ -123,17 +127,15 @@ goto :askPull
     IF DEFINED VSCODE (
         IF "%VSCODE%"=="n" (
             goto :handleApps
+        ) ELSE (
+            start cmd /C "code %MAINFOLDER%\%PROJECT%\%VSCODE%"
         )
-        ::start cmd /C "cd C:\Users\%USERNAME%\Desktop\projects\%PROJECT%\%VSCODE% & code ."
-        code C:\Users\%USERNAME%\Desktop\projects\%PROJECT%\%VSCODE%
     ) ELSE (
         IF NOT "%FIRSTAPP%"=="n" (
-            ::start cmd /C "cd C:\Users\%USERNAME%\Desktop\projects\%PROJECT%\%FIRSTAPP% & code ."
-            code C:\Users\%USERNAME%\Desktop\projects\%PROJECT%\%FIRSTAPP%
+            start cmd /C "code %MAINFOLDER%\%PROJECT%\%FIRSTAPP%"
         )
         IF DEFINED SECONDAPP (
-            ::start cmd /C "cd C:\Users\%USERNAME%\Desktop\projects\%PROJECT%\%SECONDAPP% & code ."
-            code C:\Users\%USERNAME%\Desktop\projects\%PROJECT%\%SECONDAPP%
+            start cmd /C "code %MAINFOLDER%\%PROJECT%\%SECONDAPP%"
         )
     )
 
@@ -143,10 +145,10 @@ goto :askPull
         goto :loadAllApps
     ) ELSE (
         IF "%FIRSTAPP%"=="api" (
-            goto :runFirstApp
+            goto :runApps
         ) ELSE (
             IF "%FIRSTAPP%"=="n" (
-                goto :startPostman
+                goto :startDiscord
             ) ELSE (
                 goto :runAPI
             )
@@ -155,10 +157,21 @@ goto :askPull
 
 
 :loadAllApps
-    cd C:\Users\%USERNAME%\Desktop\projects\%PROJECT%
     for /f %%f in ('dir /a:d /b .') do (
         IF NOT "%%f"==".git" (
-            cd C:\Users\%USERNAME%\Desktop\projects\%PROJECT%
+            IF NOT "%%f"=="adm" (
+                IF NOT "%%f"=="api" (
+                    IF NOT "%%f"=="app" (
+                        set /p "COMMAND%%f=Enter command to start '%%f': "
+                    )
+                )
+            )
+        )
+    )
+
+    for /f %%f in ('dir /a:d /b .') do (
+        IF NOT "%%f"==".git" (
+            :: edit
             IF "%%f"=="adm" (
                 start cmd /k "cd %%f & ng serve"
                 start http://localhost:4200
@@ -169,37 +182,62 @@ goto :askPull
                     IF "%%f"=="app" (
                         start cmd /k "cd %%f & ionic s"
                     ) ELSE (
-                        set /p "COMMAND=Ingresar comando para inicar %%f: "
-                        start cmd /k "cd %%f & !COMMAND!"
+                        start cmd /k "cd %%f & !COMMAND%%f!"
                     )
                 )
             )
         )
     )
-    goto :startPostman
+    goto :startDiscord
 
 
 :runAPI
     cd api
-    IF %ERRORLEVEL% neq 0 goto :runFirstApp
+    IF %ERRORLEVEL% neq 0 goto :runApps
     start cmd /k "npm start"
     cd ..
 
 
-:runFirstApp
+:runApps
     start cmd /k "cd %FIRSTAPP% & %FIRSTCOMMAND%"
     IF "%FIRSTAPP%"=="adm" (
-        start http://localhost:4200
+        start http://localhost:4200/
     )
 
-:: runSecondApp
     IF NOT DEFINED SECONDAPP (
-        goto :startPostman
+        goto :startDiscord
     )
 
     start cmd /k "cd %SECONDAPP% & %SECONDCOMMAND%"
     IF "%SECONDAPP%"=="adm" (
-        start http://localhost:4200
+        start http://localhost:4200/
+    )
+
+
+:startDiscord
+    start %LocalAppData%\Discord\Update --processStart Discord.exe
+
+:: startGitBash
+    IF "%GITPULL%"=="y" (
+        start "" "%PROGRAMFILES%\Git\bin\sh.exe" --login -i -l -c "sh -c 'git pull; exec sh'"
+    ) ELSE (
+        start "" "%PROGRAMFILES%\Git\bin\sh.exe" --login
+    )
+
+:: openVSCode
+    IF DEFINED VSCODE (
+        IF "%VSCODE%"=="n" (
+            goto :startPostman
+        ) ELSE (
+            start cmd /C "code %MAINFOLDER%\%PROJECT%\%VSCODE%"
+        )
+    ) ELSE (
+        IF NOT "%FIRSTAPP%"=="n" (
+            start cmd /C "code %MAINFOLDER%\%PROJECT%\%FIRSTAPP%"
+        )
+        IF DEFINED SECONDAPP (
+            start cmd /C "code %MAINFOLDER%\%PROJECT%\%SECONDAPP%"
+        )
     )
 
 
@@ -207,5 +245,4 @@ goto :askPull
     start %LocalAppData%\Postman\Postman
 
 
-
-    exit
+exit
