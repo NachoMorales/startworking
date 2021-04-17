@@ -64,16 +64,16 @@ IF "%SECONDAPP%"=="adm" (
         set SECONDCOMMAND=ionic s
     ) ELSE (
         for /f %%f in ('dir /a:d /b .') do (
-                IF "%%f"=="%SECONDAPP%" (
-                    set SECONDAPPISVALID=si
-                )
+            IF "%%f"=="%SECONDAPP%" (
+                set SECONDAPPISVALID=si
             )
-            IF DEFINED SECONDAPPISVALID (
-                set /p SECONDCOMMAND="Enter command to start '%SECONDAPP%': "
-            ) ELSE (
-                echo No se encontro la carpeta '%SECONDAPP%' en el proyecto %PROJECT%
-                exit /b
-            )
+        )
+        IF DEFINED SECONDAPPISVALID (
+            set /p SECONDCOMMAND="Enter command to start '%SECONDAPP%': "
+        ) ELSE (
+            echo No se encontro la carpeta '%SECONDAPP%' en el proyecto %PROJECT%
+            exit /b
+        )
     )
 )
 goto :askPull
@@ -145,7 +145,6 @@ goto :askPull
 
     for /f %%f in ('dir /a:d /b .') do (
         IF NOT "%%f"==".git" (
-            :: edit
             IF "%%f"=="adm" (
                 start cmd /k "cd %%f & ng serve"
                 start http://localhost:4200
@@ -168,8 +167,10 @@ goto :askPull
 :runAPI
     cd api
     IF %ERRORLEVEL% neq 0 goto :runApps
-    start cmd /k "npm start"
-    cd ..
+    ELSE (
+        start cmd /k "npm start"
+        cd ..
+    )
 
 
 :runApps
