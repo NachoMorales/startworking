@@ -206,7 +206,9 @@ goto :askPull
         ) 
         IF "%VSCODE%"=="a" (
             for /f %%f in ('dir /a:d /b .') do (
-                start cmd /C "code %%f"
+                IF NOT "%%f"==".git" (
+                    start cmd /C "code %%f"
+                )
             )
         ) ELSE (
             start cmd /C "code %MAINFOLDER%\%PROJECT%\%VSCODE%"
